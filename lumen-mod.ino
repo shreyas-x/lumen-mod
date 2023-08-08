@@ -2,6 +2,7 @@
 /*
 Modified by: Shreyas
 Date:        26 Jul 2023
+Modified:    08 Aug 2023
 Description: Firmware for Blue Robotics Lumen LEDs to be controlled
              via RS232 on our vehicle. Extends on the code provided by a member
              on the Blue Robotics forum.
@@ -11,6 +12,8 @@ Description: Firmware for Blue Robotics Lumen LEDs to be controlled
 Steps:       Compile here with board ATtiny25/45/85, Clock "External 8MHz", Processor "ATtiny45"
              Then flash the .hex file using avrdude and USBTinyISP programmer
              .\avrdude.exe -c usbtiny -p attiny45 -U flash:w:lumen-mod.ino.hex:a
+             If using a fresh IC, program with the correct fuses
+             .\avrdude.exe -c usbtiny -p attiny45 -U flash:w:lumen-mod.ino.hex:a -U hfuse:w:0xdf:m -U lfuse:w:0xfe:m -U efuse:w:0xff:m
 
 Blue Robotics Lumen LED Embedded Software
 ------------------------------------------------
@@ -38,7 +41,8 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
--------------------------------*/
+-------------------------------
+*/
 
 // HARDWARE PIN DEFINITIONS
 #define LED_PIN 1    // pin 6
@@ -62,6 +66,8 @@ void setup() {
   // Setup up PWM on output pin
   // The default analogWrite frequency can mess with cameras
   TCCR0B = _BV(CS01);  // Set prescalar to 8 for 8M/8/256 = 3906 Hz
+
+  analogWrite(LED_PIN, 255);
 }
 
 void turnLedOnFromInput(char c) {
@@ -84,8 +90,11 @@ void turnLedOnFromInput(char c) {
       case 0x35:
         analogWrite(LED_PIN, 230);
         break;
+      case 0x36:
+        analogWrite(LED_PIN, 255);
+        break;  
       default:
-        digitalWrite(LED_PIN, HIGH);
+        analogWrite(LED_PIN, 255);
     }
 }
 
@@ -103,11 +112,11 @@ void loop() {
     if (firstDim) {
       analogWrite(LED_PIN, 21);
       delay(500);
-      analogWrite(LED_PIN, LOW);
+      digitalWrite(LED_PIN, LOW);
       delay(500);
       analogWrite(LED_PIN, 21);
       delay(500);
-      analogWrite(LED_PIN, LOW);
+      digitalWrite(LED_PIN, LOW);
       delay(500);
       analogWrite(LED_PIN, 21);
       firstDim = false;
